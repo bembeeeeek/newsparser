@@ -33,7 +33,7 @@ def send_to_db(query, params):
     except Exception as ex:
         print(ex)
     finally:
-        print("Successful SELECT")
+        print("Successful INSERT")
         cursor.close()
         db.close()
     
@@ -84,54 +84,13 @@ def parsing():
             date_times_UNIX = date_times.timestamp() # дата новости в формате UNIX
             date_in_unix_db = "UNIX_TIMESTAMP(CURRENT_TIMESTAMP)"
 
-            params = [resource_id, link, title, contents, date_times_UNIX, date_in_unix_db, date_times_YMD] #словарь в массиве
-            print(params)
-            #items.append((resource_id, link, title, contents, date_times_UNIX, date_in_unix_db, date_times_YMD))
-            # send_to_db("INSERT INTO `items` (res_id, link, title, content, nd_date, s_date, not_date) VALUES (%s, %s, %s, %s, %s, %s, %s)", (params))
-
-
-    # for param in params:
-    # send_to_db("INSERT INTO `items` (res_id, link, title, content, nd_date, s_date, not_date) VALUES (%s, %s, %s, %s, %s, %s, %s)", (params))
-      
-
-
-
-
-        # send_to_db("INSERT INTO `items` (res_id, link, title, content, nd_date, s_date, not_date) VALUES (%s, %s, %s, %s, %s, %s, %s)", (item[0],item[1],item[2],item[3],item[4],item[5],item[6]))
-        
-        # print(item[3])
-        # cursor.execute("INSERT INTO `items` (res_id, link, title, content, nd_date, s_date, not_date) VALUES (%s, %s, %s, %s, %s, %s)", (link, title, contents, date_times_UNIX, date_times_YMD))
-
-
-
-
-        #send_to_db("INSERT INTO `items` (res_id, link, title, content, nd_date, s_date, not_date) VALUES (%s, %s, %s, %s, %s, UNIX_TIMESTAMP(CURRENT_TIMESTAMP), %s)", (item[0],item[1],item[2],item[3],item[4],item[5],item[6]))
-
-
-
-
-
-
-
-
-
-
-
-
+            item = [resource_id, link, title, contents, date_times_UNIX, date_in_unix_db, date_times_YMD] #словарь в массиве
+            items.append(item)
+    send_to_db("INSERT INTO `items` (res_id, link, title, content, nd_date, s_date, not_date) VALUES (%s, %s, %s, %s, %s, %s, %s)", items)
+    
 
         #print(f'{WHITE} Ссылка: {RED} {item[0]} \n {WHITE} Тайтл: {BLUE} {item[1]} \n {WHITE} Контент: \n {YELLOW} {item[2][0]}')
 
 
-
-        # mycursor.execute("INSERT INTO `items` (link, title) VALUES (%s, %s)", (item[0], item[1]))
-        
-        
-    #     mydb.commit()  
-
-    #     mycursor.execute("INSERT INTO `items` (link, title) VALUES (%s, %s)", (item[0], item[1]))
-          
-    #         # mycursor.execute("INSERT INTO `items` (res_id, link, title, content, nd_date, s_date, not_date) VALUES (%s, %s, %s, %s, %s, %s)", (link, title, contents, date_times_UNIX, date_times_YMD))
-    # mydb.close()
-        #mycursor.execute("INSERT INTO `items` (res_id, link, title, content, nd_date, s_date, not_date) VALUES (%s, %s, %s, %s, UNIX_TIMESTAMP(CURRENT_TIMESTAMP), %s)",(id, link, title, contents, date_times_UNIX, date_times_YMD))
 
 parsing()
