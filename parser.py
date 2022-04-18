@@ -24,13 +24,12 @@ def select_items(query): # подключение к базе и взятие и
         cursor.close()
         db.close()
 
-def send_to_db(query):
+def send_to_db(query, params):
     db = mysql.connector.connect(host='localhost', user='dima', password='dima', db='bd', charset='utf8mb4', autocommit=True, buffered=True)                 
     cursor = db.cursor()
 
     try:
-        cursor.execute(query)
-        answer = cursor.fetchall()
+        cursor.executemany(query, params)
     except Exception as ex:
         print(ex)
     finally:
@@ -43,13 +42,15 @@ def send_to_db(query):
 itembd = select_items("SELECT * FROM resource")
 
 for row in itembd:
-    resource_id = row[0]
+    resource_id = row[0]    
     resource_name = row[1]
     resource_url = row[2]
     top_tags = row[3]
     bottom_tags = row[4]
     title_cuts = row[5]
     date_cut = row[6]
+
+#print(resource_url)
     
 headers = {
     "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
@@ -62,17 +63,11 @@ RED = '\033[0;31m'
 YELLOW = '\033[0;33m'
 BLUE = '\033[0;34m'
 
-r = requests.get(resource_url)
-soup = BeautifulSoup(r.text, 'lxml')
-
-
-
 def parsing():
-    # url = "https://www.nur.kz/latest/"
-    # response = requests.get(url)
-    # soup = BeautifulSoup(response.content, 'lxml')
-    links = soup.find_all('a', class_= top_tags) # берет ссылки с главной страницы
-
+    r = requests.get(resource_url)
+    soup = BeautifulSoup(r.text, 'lxml')
+    links = soup.find_all(class_= top_tags) # берет ссылки с главной страницы
+    
     items = []
 
     for link in links:
@@ -81,25 +76,36 @@ def parsing():
              # собирает все ссылки на новости
             response1 = requests.get(link)
             soup1 = BeautifulSoup(response1.content, 'lxml')
-            title = soup1.find('h1',class_= title_cuts).text # берет тайтл новости из новостной ссылки
-            contents = [text.text for text in soup1.find_all('div', class_= bottom_tags)] # текст новости из ссылки
-            date_news = soup1.find('time', class_= date_cut).get('datetime') # берет дату и время из новостной ссылки
+            title = soup1.find(class_= title_cuts).text # берет тайтл новости из новостной ссылки
+            contents = [text.text for text in soup1.find_all(class_= bottom_tags)] # текст новости из ссылки
+            date_news = soup1.find(class_= date_cut).get('datetime') # берет дату и время из новостной ссылки
             date_times = dateparser.parse(date_news)
             date_times_YMD = datetime.date(date_times).strftime('%Y:%m:%d') # дата новости в формате Год-Месяц-День.
             date_times_UNIX = date_times.timestamp() # дата новости в формате UNIX
-            items.append((link, title, contents, date_times, date_times_YMD, date_times_UNIX))
+            date_in_unix_db = "UNIX_TIMESTAMP(CURRENT_TIMESTAMP)"
 
-    for item in items:
-        # print(item[0], item[1], item[2])
-        send_to_db()
+            params = [resource_id, link, title, contents, date_times_UNIX, date_in_unix_db, date_times_YMD] #словарь в массиве
+            print(params)
+            #items.append((resource_id, link, title, contents, date_times_UNIX, date_in_unix_db, date_times_YMD))
+            # send_to_db("INSERT INTO `items` (res_id, link, title, content, nd_date, s_date, not_date) VALUES (%s, %s, %s, %s, %s, %s, %s)", (params))
+
+
+    # for param in params:
+    # send_to_db("INSERT INTO `items` (res_id, link, title, content, nd_date, s_date, not_date) VALUES (%s, %s, %s, %s, %s, %s, %s)", (params))
+      
+
+
+
+
+        # send_to_db("INSERT INTO `items` (res_id, link, title, content, nd_date, s_date, not_date) VALUES (%s, %s, %s, %s, %s, %s, %s)", (item[0],item[1],item[2],item[3],item[4],item[5],item[6]))
         
-
-        cursor.execute("INSERT INTO `items` (res_id, link, title, content, nd_date, s_date, not_date) VALUES (%s, %s, %s, %s, %s, %s)", (link, title, contents, date_times_UNIX, date_times_YMD))
-
-
+        # print(item[3])
+        # cursor.execute("INSERT INTO `items` (res_id, link, title, content, nd_date, s_date, not_date) VALUES (%s, %s, %s, %s, %s, %s)", (link, title, contents, date_times_UNIX, date_times_YMD))
 
 
 
+
+        #send_to_db("INSERT INTO `items` (res_id, link, title, content, nd_date, s_date, not_date) VALUES (%s, %s, %s, %s, %s, UNIX_TIMESTAMP(CURRENT_TIMESTAMP), %s)", (item[0],item[1],item[2],item[3],item[4],item[5],item[6]))
 
 
 
@@ -127,5 +133,5 @@ def parsing():
     #         # mycursor.execute("INSERT INTO `items` (res_id, link, title, content, nd_date, s_date, not_date) VALUES (%s, %s, %s, %s, %s, %s)", (link, title, contents, date_times_UNIX, date_times_YMD))
     # mydb.close()
         #mycursor.execute("INSERT INTO `items` (res_id, link, title, content, nd_date, s_date, not_date) VALUES (%s, %s, %s, %s, UNIX_TIMESTAMP(CURRENT_TIMESTAMP), %s)",(id, link, title, contents, date_times_UNIX, date_times_YMD))
-# params = (id, name, more_urlss, more_titles, text_news, date_times_UNIX, date_times_YMD)
+
 parsing()
