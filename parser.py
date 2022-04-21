@@ -1,5 +1,7 @@
 from datetime import datetime
+from importlib.abc import ExecutionLoader
 from multiprocessing import connection
+from ntpath import join
 from os import link
 from lxml import html
 from urllib import response
@@ -29,15 +31,13 @@ def send_to_db(query, params):
     cursor = db.cursor()
 
     try:
-        cursor.executemany(query, params)
+        cursor.execute(query, params)
     except Exception as ex:
         print(ex)
     finally:
-        print("Successful SELECT")
+        print("Successful INSERT")
         cursor.close()
         db.close()
-    
-    #itembd = mycursor.fetchall()
 
 itembd = select_items("SELECT * FROM resource")
 
@@ -77,15 +77,23 @@ def parsing():
             response1 = requests.get(link)
             soup1 = BeautifulSoup(response1.content, 'lxml')
             title = soup1.find(class_= title_cuts).text # берет тайтл новости из новостной ссылки
-            contents = [text.text for text in soup1.find_all(class_= bottom_tags)] # текст новости из ссылки
+            contents =  [text.text for text in soup1.find_all(class_= bottom_tags)] # текст новости из ссылки
             date_news = soup1.find(class_= date_cut).get('datetime') # берет дату и время из новостной ссылки
             date_times = dateparser.parse(date_news)
             date_times_YMD = datetime.date(date_times).strftime('%Y:%m:%d') # дата новости в формате Год-Месяц-День.
             date_times_UNIX = date_times.timestamp() # дата новости в формате UNIX
             date_in_unix_db = "UNIX_TIMESTAMP(CURRENT_TIMESTAMP)"
+            
+            item = (resource_id, link, title, contents, date_times_UNIX, date_times_YMD) #словарь в массиве
+            items.append(item)
+            
 
-            params = [resource_id, link, title, contents, date_times_UNIX, date_in_unix_db, date_times_YMD] #словарь в массиве
-            print(params)
+
+            sqlcom = 'INSERT INTO `items` (res_id, link, title, content, nd_date, s_date, not_date) VALUES (%s, %s, %s, %s, %s, UNIX_TIMESTAMP(CURRENT_TIMESTAMP), %s)'
+            
+            send_to_db(sqlcom, items)
+            
+            
             #items.append((resource_id, link, title, contents, date_times_UNIX, date_in_unix_db, date_times_YMD))
             # send_to_db("INSERT INTO `items` (res_id, link, title, content, nd_date, s_date, not_date) VALUES (%s, %s, %s, %s, %s, %s, %s)", (params))
 
@@ -103,21 +111,7 @@ def parsing():
         # cursor.execute("INSERT INTO `items` (res_id, link, title, content, nd_date, s_date, not_date) VALUES (%s, %s, %s, %s, %s, %s)", (link, title, contents, date_times_UNIX, date_times_YMD))
 
 
-
-
         #send_to_db("INSERT INTO `items` (res_id, link, title, content, nd_date, s_date, not_date) VALUES (%s, %s, %s, %s, %s, UNIX_TIMESTAMP(CURRENT_TIMESTAMP), %s)", (item[0],item[1],item[2],item[3],item[4],item[5],item[6]))
-
-
-
-
-
-
-
-
-
-
-
-
 
         #print(f'{WHITE} Ссылка: {RED} {item[0]} \n {WHITE} Тайтл: {BLUE} {item[1]} \n {WHITE} Контент: \n {YELLOW} {item[2][0]}')
 
