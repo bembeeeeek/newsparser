@@ -59,7 +59,7 @@ def send_to_db(query, params): # подключение к бд и и делае
         cursor.close()
         db.close()
     
-def correct_url(base_url, url): # испрвляет битые ссылки типо: /article/sport/....
+def correct_url(base_url, url): # исправляет битые ссылки типа: /article/sport/....
     base_url = str(urlparse(base_url).scheme) + "://" + str(urlparse(base_url).netloc)
     
     if (str(url).startswith("http")):
@@ -94,10 +94,9 @@ def parsing(row):
     for link in links:
         response1 = requests.get(link)
         soup1 = BeautifulSoup(response1.text, 'lxml')
-
-        contents = ''.join(text.text.strip() for text in soup1.find_all(class_= bottom_tags)) # текст новости из ссылки
-        title = soup1.find(title_cuts).text # берет тайтл новости из новостной ссылки
-        date_news = soup1.find(date_cut).get('datetime') # берет дату и время из новостной ссылки
+        contents = ''.join(text.text.strip() for text in soup1.select(bottom_tags)) # текст новости из ссылки
+        title = soup1.select_one(title_cuts).text.strip() # берет тайтл новости из новостной ссылки
+        date_news = soup1.select_one(date_cut).get('datetime') # берет дату и время из новостной ссылки
         date_times = dateparser.parse(date_news) # парсит дату в нормальный объект для дальнейшей работы и конвератции
         date_times_YMD = datetime.date(date_times).strftime('%Y:%m:%d') # дата новости в формате Год-Месяц-День.
         date_times_UNIX = date_times.timestamp() # дата новости в формате UNIX
